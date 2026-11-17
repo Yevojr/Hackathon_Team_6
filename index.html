@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Promised Land</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='s' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%233db4f5'/%3E%3Cstop offset='1' stop-color='%23c9f0ff'/%3E%3C/linearGradient%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%238be28b'/%3E%3Cstop offset='1' stop-color='%232fb52f'/%3E%3C/linearGradient%3E%3CclipPath id='c'%3E%3Ccircle cx='32' cy='32' r='30'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path='url(%23c)'%3E%3Crect width='64' height='64' fill='url(%23s)'/%3E%3Cpath d='M-4 50 Q20 30 40 42 T70 38 V70 H-4Z' fill='url(%23g)'/%3E%3Crect x='36' y='20' width='6' height='20' fill='%234a90c8'/%3E%3Crect x='28' y='26' width='6' height='14' fill='%2379b6e0'/%3E%3Crect x='44' y='28' width='6' height='12' fill='%234a90c8'/%3E%3Cellipse cx='24' cy='16' rx='14' ry='7' fill='%23fff' opacity='.55'/%3E%3C/g%3E%3Ccircle cx='32' cy='32' r='30' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+:root{--sky1:#5ec8ff;--sky2:#c9f0ff;--grass:#5fd35f;--deep:#0a6fb8;--ink:#0b3a5c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:"Segoe UI",Frutiger,Tahoma,sans-serif;color:var(--ink);
+ background:radial-gradient(ellipse at 20% 0,#fff 0,transparent 40%),linear-gradient(#3db4f5 0,#9fe2ff 55%,#d8f7d0 80%,#6fdc6f 100%) fixed}
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;pointer-events:none;
+ background:radial-gradient(circle at 30% 30%,#fff 0,rgba(255,255,255,.25) 40%,rgba(255,255,255,.05) 70%);border:1px solid rgba(255,255,255,.7)}
+body::before{width:180px;height:180px;left:5%;top:60%}
+body::after{width:110px;height:110px;right:8%;top:15%}
+header{display:flex;align-items:center;gap:1rem;padding:.7rem 1.2rem;background:linear-gradient(rgba(255,255,255,.85),rgba(190,235,255,.6));
+ border-bottom:1px solid #fff;box-shadow:0 4px 18px rgba(0,100,180,.25);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+header h1{margin:0;font-size:1.3rem;text-shadow:0 1px 0 #fff}
+nav{display:flex;gap:.4rem;flex-wrap:wrap}
+nav span{padding:.25rem .8rem;border-radius:99px;font-size:.85rem;background:rgba(255,255,255,.5);border:1px solid #fff;opacity:.6}
+nav span.on{opacity:1;background:linear-gradient(#8be28b,#2fb52f);color:#fff;text-shadow:0 1px 1px #0006;box-shadow:inset 0 1px 0 #fff9}
+main{max-width:1000px;margin:1.2rem auto;padding:0 1rem}
+section{display:none;padding:1.5rem;border-radius:22px;background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.45));
+ border:1px solid #fff;box-shadow:0 10px 35px rgba(0,90,170,.3),inset 0 1px 0 #fff;backdrop-filter:blur(8px)}
+section.on{display:block}
+h2{margin-top:0}
+button,.btn{font:inherit;cursor:pointer;padding:.55rem 1.3rem;border-radius:99px;border:1px solid #1c7ec4;color:#fff;text-shadow:0 1px 1px #0005;
+ background:linear-gradient(#7fd5ff 0,#2a9df0 50%,#1585db 51%,#4dbaff 100%);box-shadow:inset 0 1px 0 #fffb,0 3px 8px rgba(0,80,160,.35)}
+button:hover,.btn:hover{filter:brightness(1.1)}
+button.go{background:linear-gradient(#a6f0a6 0,#3cc43c 50%,#25a825 51%,#6fe06f 100%);border-color:#1d8a1d}
+button.alt{background:linear-gradient(#fff,#cfe9f7);color:var(--ink);text-shadow:none;border-color:#9bc}
+button.alt.sel{background:linear-gradient(#8be28b,#2fb52f);color:#fff;text-shadow:0 1px 1px #0006;border:2px solid #167516;box-shadow:inset 0 2px 5px #0005,0 0 0 3px #fff,0 0 10px #2fb52f}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.7rem 0}
+.right{justify-content:flex-end}
+.note{font-size:.9rem;padding:.8rem 1rem;border-radius:14px;background:rgba(255,255,255,.7);border:1px solid #fff;margin:1rem 0}
+input[type=text],input[type=email],input[type=password],textarea{width:100%;font:inherit;padding:.6rem .8rem;border-radius:12px;border:1px solid #8ec6ea;background:#fffd;box-shadow:inset 0 2px 4px #0002}
+label{display:block;font-weight:600;margin:.8rem 0 .3rem}
+main.full{max-width:none;margin:0;padding:0}
+#s2.on{display:flex;flex-direction:column;height:calc(100vh - var(--hh,60px));padding:0;border-radius:0;border:0;box-shadow:none;background:none;backdrop-filter:none}
+#s2 .stage{flex:1;min-height:0;border-radius:0}
+#s2 .stage img{width:100%;height:100%;max-height:none;object-fit:contain}
+#s1.on{display:flex;flex-direction:column;height:calc(100vh - var(--hh,60px));padding:0;border-radius:0;border:0;box-shadow:none;background:none;backdrop-filter:none}
+#cw{flex:1;min-height:0;position:relative;background:#fff}
+canvas#draw{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:none;display:block}
+.bar{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.35rem .7rem;background:linear-gradient(rgba(255,255,255,.92),rgba(190,235,255,.8));border-top:1px solid #fff;box-shadow:0 -3px 12px rgba(0,100,180,.25)}
+#s2 .bar{order:-1;border-top:0;border-bottom:1px solid #fff;box-shadow:0 3px 12px rgba(0,100,180,.25);position:relative;z-index:1}
+#s1.on{flex-direction:row}
+#s1 .bar{order:-1;flex-direction:column;align-items:stretch;flex-wrap:nowrap;width:110px;padding:.6rem;overflow-y:auto;border-top:0;border-right:1px solid #fff;box-shadow:3px 0 12px rgba(0,100,180,.25);position:relative;z-index:1}
+#s1 .bar label{flex-direction:column;align-items:stretch}
+#s1 .bar input[type=color],#s1 .bar input[type=range]{width:100%}
+.bar button{padding:.25rem .8rem;font-size:.85rem}
+.bar label{margin:0;font-size:.85rem;display:flex;align-items:center;gap:.3rem}
+.bar .sp{flex:1}
+#cursor{position:fixed;pointer-events:none;border:2px solid #000;outline:1px solid #fff;border-radius:50%;z-index:20;display:none;transform:translate(-50%,-50%)}
+.stage{background:#000;border-radius:14px;min-height:300px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.stage img{max-width:100%;max-height:70vh}
+.stage:fullscreen{border-radius:0}.stage:fullscreen img{max-height:100vh;width:100%;object-fit:contain}
+.half{padding:1rem;border-radius:16px;background:rgba(255,255,255,.65);border:1px solid #fff;margin-bottom:1rem}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}.pair img{width:100%;border-radius:10px;background:#fff}
+#analysis{white-space:pre-wrap;line-height:1.5}
+.collage{columns:3 220px;gap:.8rem}
+.card{break-inside:avoid;margin-bottom:.8rem;padding:.5rem;border-radius:14px;background:#fffc;border:1px solid #fff;box-shadow:0 3px 10px #0003}
+.card img{width:100%;border-radius:8px;display:block;margin-bottom:.3rem}
+.card p{margin:.2rem;font-size:.85rem}
+footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<header><h1>Promised Land</h1><nav id="nav"></nav></header>
+<main>
+
+<section id="s0" class="on">
+ <h2>Draw your ideal city landscape</h2>
+ <p style="font-size:1.2rem">Draw your ideal city landscape. Keep it realistic. Keep your drawing SFW.</p>
+ <div class="note"><b>Disclaimer:</b> Please be respectful with your drawings. No hateful or discriminatory imagery is allowed. Drawing submissions are closely monitored and offending persons can and will be fined.</div>
+ <div class="row right"><button class="go" data-next>Start drawing &rarr;</button></div>
+</section>
+
+<section id="s1">
+ <div id="cw"><canvas id="draw" width="1280" height="720"></canvas></div>
+ <div class="bar">
+  <label>Color <input type="color" id="color" value="#1a8a3a"></label>
+  <label>Size <input type="range" id="size" min="2" max="60" value="8"></label>
+  <button class="alt sel" id="pen">Pen</button>
+  <button class="alt" id="eraser">Eraser</button>
+  <button class="alt" id="fill">Fill</button>
+  <button class="alt" id="clear">Clear</button>
+  <button class="go" data-next>Next &rarr;</button>
+ </div>
+</section>
+
+<section id="s2">
+ <div class="stage" id="stage"></div>
+ <div class="bar">
+  <button class="alt" id="full">Fullscreen for beamer</button>
+  <span class="sp"></span>
+  <button class="go" data-next>Next &rarr;</button>
+ </div>
+</section>
+
+<section id="s3">
+ <h2>AI analysis</h2>
+ <div class="half">
+  <div class="pair"><div>Desired<img id="p1"></div><div>Current<img id="p2"></div></div>
+  <label for="key">Claude API key</label>
+  <input type="password" id="key" placeholder="Paste key (kept in memory only)" autocomplete="off">
+  <div class="row"><button id="run">Analyse</button><span id="status"></span></div>
+  <div id="analysis"></div>
+ </div>
+ <div class="row right"><button class="go" data-next>Next &rarr;</button></div>
+</section>
+
+<section id="s4">
+ <h2>What creative solution can you come up with for the current situation?</h2>
+ <label for="idea">Your idea</label><textarea id="idea" rows="6"></textarea>
+ <label for="name">Name (optional)</label><input type="text" id="name">
+ <label for="email">Email (optional, only needed if you want to be contacted about the prize)</label>
+ <div class="row" style="margin:0"><input type="email" id="email" style="flex:1"><button class="alt" id="sendcode">Send code</button></div>
+ <div class="row"><input type="text" id="code" placeholder="6-digit code" style="flex:1" disabled><button class="alt" id="verify" disabled>Verify</button></div>
+ <div id="vstat"></div>
+ <div class="row right"><button class="alt" id="skip">Skip</button><button class="go" id="submit" disabled>Submit &rarr;</button></div>
+ <footer class="fine">The most creative solution of the week, gets a bouquet of flowers of their choice</footer>
+</section>
+
+<section id="s5">
+ <h2>Thank you!</h2>
+ <p>Thank you for sharing your idea. Here are other submissions.</p>
+ <div class="collage" id="collage"></div>
+ <div class="row right"><button class="alt" id="again">Start over</button></div>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const names=["Start","Draw","Current","Analysis","Your idea","Thanks"];
+const secs=[...document.querySelectorAll('section')];
+$('nav').innerHTML=names.map(n=>`<span>${n}</span>`).join('');let cur=0;
+function show(i){cur=i;secs.forEach((s,k)=>s.classList.toggle('on',k==i));
+ [...$('nav').children].forEach((n,k)=>n.classList.toggle('on',k==i));
+ document.querySelector('main').classList.toggle('full',i==1||i==2);
+ document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');
+ if(i==1)fit(); if(i==3)prep3(); if(i==5)collage(); scrollTo(0,0)}
+addEventListener('resize',()=>{if(cur==1)fit()});
+document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>show(cur+1));
+
+// ---- drawing
+const cv=$('draw'),ctx=cv.getContext('2d'),cu=$('cursor');
+let tool='pen',down=false,last;
+function setTool(t){tool=t;['pen','eraser','fill'].forEach(k=>$(k).classList.toggle('sel',k==t))}
+// ponytail: plain white base; the permanent backdrop image will be drawn here later
+function paintBase(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height)}
+paintBase();
+// eraser draws on a separate layer so it never wipes the backdrop
+const ink=document.createElement('canvas');ink.width=cv.width;ink.height=cv.height;const ic=ink.getContext('2d');
+// canvas fills the area between header and toolbar; strokes are kept when the window resizes
+function fit(){document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');
+ const w=$('cw').clientWidth,h=$('cw').clientHeight;if(!w||!h||(cv.width==w&&cv.height==h))return;
+ const old=document.createElement('canvas');old.width=ink.width;old.height=ink.height;old.getContext('2d').drawImage(ink,0,0);
+ cv.width=ink.width=w;cv.height=ink.height=h;ic.drawImage(old,0,0);redraw()}
+function redraw(){paintBase();ctx.drawImage(ink,0,0)}
+function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]}
+function sz(){return +$('size').value}
+function moveCursor(e){const r=cv.getBoundingClientRect(),d=sz()*r.width/cv.width;
+ cu.style.cssText=`display:block;left:${e.clientX}px;top:${e.clientY}px;width:${d}px;height:${d}px`}
+cv.addEventListener('pointerdown',e=>{
+ if(tool=='fill'){floodFill(...pos(e));return}
+ down=true;cv.setPointerCapture(e.pointerId);last=pos(e);stroke(last,last)});
+// paint bucket: region is found on the visible picture, paint goes on the ink layer
+function floodFill(x,y){
+ x=Math.floor(x);y=Math.floor(y);const W=cv.width,H=cv.height;
+ const src=ctx.getImageData(0,0,W,H).data,dst=ic.getImageData(0,0,W,H),o=dst.data;
+ const hex=$('color').value,c=[1,3,5].map(i=>parseInt(hex.substr(i,2),16));
+ const s=(y*W+x)*4,t=[src[s],src[s+1],src[s+2],src[s+3]],TOL=48;
+ const near=i=>Math.abs(src[i]-t[0])+Math.abs(src[i+1]-t[1])+Math.abs(src[i+2]-t[2])<=TOL;
+ const seen=new Uint8Array(W*H),stack=[y*W+x];seen[y*W+x]=1;
+ while(stack.length){const p=stack.pop(),i=p*4;
+  if(!near(i))continue;
+  o[i]=c[0];o[i+1]=c[1];o[i+2]=c[2];o[i+3]=255;
+  const px=p%W;
+  if(px>0&&!seen[p-1]){seen[p-1]=1;stack.push(p-1)}
+  if(px<W-1&&!seen[p+1]){seen[p+1]=1;stack.push(p+1)}
+  if(p>=W&&!seen[p-W]){seen[p-W]=1;stack.push(p-W)}
+  if(p<W*(H-1)&&!seen[p+W]){seen[p+W]=1;stack.push(p+W)}}
+ ic.putImageData(dst,0,0);redraw()}
+cv.addEventListener('pointermove',e=>{moveCursor(e);if(down){const p=pos(e);stroke(last,p);last=p}});
+cv.addEventListener('pointerup',()=>down=false);
+cv.addEventListener('pointerleave',()=>cu.style.display='none');
+function stroke(a,b){ic.globalCompositeOperation=tool=='eraser'?'destination-out':'source-over';
+ ic.strokeStyle=$('color').value;ic.lineWidth=sz();ic.lineCap=ic.lineJoin='round';
+ ic.beginPath();ic.moveTo(...a);ic.lineTo(b[0]+.01,b[1]);ic.stroke();redraw()}
+['pen','eraser','fill'].forEach(k=>$(k).onclick=()=>setTool(k));
+$('color').oninput=()=>{if(tool=='eraser')setTool('pen')};
+$('clear').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw()};
+
+// ---- current image: generated placeholder of a poor park, to be replaced by the permanent photo
+const curImg=(()=>{const c=document.createElement('canvas');c.width=1280;c.height=720;const x=c.getContext('2d');
+ const g=x.createLinearGradient(0,0,0,300);g.addColorStop(0,'#cfd8dc');g.addColorStop(1,'#eceff1');x.fillStyle=g;x.fillRect(0,0,1280,720);
+ x.fillStyle='#90a4ae';[[0,170,140,130],[150,120,110,180],[280,190,150,110],[900,140,120,160],[1040,180,130,120],[1170,110,110,190]].forEach(b=>x.fillRect(...b));
+ x.fillStyle='#b99b6b';x.fillRect(0,300,1280,420);
+ x.fillStyle='#a58652';for(let i=0;i<40;i++){x.beginPath();x.ellipse((i*397)%1280,330+(i*151)%370,40+(i%5)*12,10+(i%3)*5,0,0,7);x.fill()}
+ x.fillStyle='#9e9e9e';x.beginPath();x.moveTo(500,720);x.lineTo(780,720);x.lineTo(680,300);x.lineTo(600,300);x.fill();
+ const tree=(px,py,s)=>{x.fillStyle='#6d4c41';x.fillRect(px-6*s,py-90*s,12*s,90*s);x.fillStyle='#8a9a5b';x.beginPath();x.arc(px,py-110*s,38*s,0,7);x.fill()};
+ tree(220,520,1.2);tree(1030,450,.9);
+ x.strokeStyle='#6b7a3a';x.lineWidth=3;x.beginPath();x.moveTo(400,560);x.lineTo(400,590);x.stroke();x.fillStyle='#e8d44d';x.beginPath();x.arc(400,556,7,0,7);x.fill();
+ x.fillStyle='#5d4037';x.fillRect(880,600,150,14);x.fillRect(890,614,10,36);x.fillRect(1010,614,10,36);
+ x.fillStyle='#37474f';x.font='24px sans-serif';x.fillText('Placeholder image',20,700);
+ return c.toDataURL('image/jpeg',.85)})();
+$('stage').innerHTML=`<img src="${curImg}">`;
+$('full').onclick=()=>$('stage').requestFullscreen&&$('stage').requestFullscreen();
+
+// ---- AI analysis
+const SAFE=(()=>{const c=document.createElement('canvas');c.width=640;c.height=360;const x=c.getContext('2d');
+ x.fillStyle='#bfe9ff';x.fillRect(0,0,640,360);x.fillStyle='#7fdc7f';x.fillRect(0,260,640,100);
+ x.fillStyle='#4a90c8';[[60,150,70,110],[150,110,80,150],[260,170,60,90],[350,90,90,170],[470,140,70,120]].forEach(b=>x.fillRect(...b));
+ return c.toDataURL('image/jpeg',.8)})();
+let drawing=null,drawingFlagged=false;
+function prep3(){drawing=cv.toDataURL('image/jpeg',.85);$('p1').src=drawing;$('p2').src=curImg;$('analysis').textContent='';$('status').textContent=''}
+// Image 1 sent to Claude = the child's drawing, image 2 = the stock photo of the park.
+const PROMPT=`Topic: biodiversity
+You get two images. Image 1 is a drawing of an ideal ecosystem made by a child. Image 2 is a stock image of a Rotterdam park with these problems:
+* Dry soil
+* Not enough shade during summer
+* Not enough unique flowers
+* Not enough unique insects
+
+Step 1: List every plant name, animal name and relevant landscape feature in the child's drawing (image 1), with a confidence level, as a JSON array in this format:
+[{"name":"butterfly","type":"animal","count":2,"confidence":0.95},{"name":"tree","type":"plant","count":2,"confidence":0.95}]
+Step 2: Compare the features in the drawing (image 1) to what the Current image (image 2) shows, using the park's problems as the points of comparison.
+Step 3: Write a short text with three parts. Part 1: say what you see in their drawing, naming the features from step 1, and say that this drawing is their own ideal outlook, something unique to them that nobody else would draw the same way. Part 2: say what the Current image shows instead, mentioning up to 3 of the park's problems that stand out against the drawing. Part 3: one closing sentence saying the gap between the two is what makes their vision worth thinking about. Only describe and compare. Do NOT give advice, tips, suggestions or solutions, do NOT say what they should change, and do NOT judge or grade the drawing. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise.
+
+Safety check: set nsfw to true if EITHER image is sexual, hateful, discriminatory or violent.
+
+Reply ONLY with JSON: {"nsfw":boolean,"features":[the array from step 1],"output":"the text from step 3"}`;
+function b64(u){return u.split(',')[1]}
+$('run').onclick=async()=>{
+ const key=$('key').value.trim();if(!key){$('status').textContent='Enter an API key first.';return}
+ $('status').textContent='Analysing...';$('run').disabled=true;
+ const prompt=PROMPT;
+ try{
+  const img=d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64(d)}});
+  // photo is shrunk to jpeg so big uploads stay under the API image size limit
+  const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawing),img(await thumb(curImg,1280)),{type:'text',text:prompt}]}]});
+  let r,j;
+  // 429/529 = Anthropic is busy or rate limited: retry with growing waits
+  for(let n=1;n<=5;n++){
+   r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body});
+   j=await r.json();
+   if(r.status!=529&&r.status!=429)break;
+   if(n<5){$('status').textContent=`Claude is busy, retrying (${n}/4)...`;await new Promise(s=>setTimeout(s,n*3000))}}
+  if(!r.ok)throw new Error(j.error?.message||r.status);
+  const txt=j.content.map(c=>c.text||'').join('');
+  const o=JSON.parse(txt.slice(txt.indexOf('{'),txt.lastIndexOf('}')+1));
+  if(o.nsfw){drawing=SAFE;drawingFlagged=true;$('p1').src=SAFE;
+   $('analysis').textContent='A flagged image was replaced with a safe placeholder.\n\n'}
+  else $('analysis').textContent='';
+  $('analysis').textContent+=o.output;$('status').textContent='Done';
+ }catch(e){$('status').textContent='Error: '+e.message}
+ $('run').disabled=false};
+
+// ---- email "auth" (demo only, no server)
+let sentCode=null,verified=false;
+// email is optional; if one is typed it must be verified
+function gate(){$('submit').disabled=!(($('email').value.trim()===''||verified)&&$('idea').value.trim())}
+['idea','name'].forEach(i=>$(i).oninput=gate);
+$('email').oninput=()=>{verified=false;gate()};
+$('sendcode').onclick=()=>{if(!$('email').validity.valid||!$('email').value){$('vstat').textContent='Enter a valid email.';return}
+ sentCode=String(100000+Math.floor(Math.random()*900000));
+ $('vstat').textContent='Demo mode: no email is sent. Your code is '+sentCode;
+ $('code').disabled=$('verify').disabled=false};
+$('verify').onclick=()=>{verified=$('code').value.trim()===sentCode;
+ $('vstat').textContent=verified?'Email verified.':'Wrong code.';gate()};
+
+// ---- storage + collage
+function thumb(u,w){return new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=Math.round(w*i.height/i.width);
+ c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};i.src=u})}
+const KEY='promisedland_subs';
+const load=()=>{try{return JSON.parse(localStorage[KEY]||'[]')}catch{return[]}};
+$('submit').onclick=async()=>{
+ const subs=load();
+ subs.push({name:$('name').value.trim(),idea:$('idea').value.trim(),email:verified?$('email').value.trim():'',
+  a:await thumb(drawing,360),t:Date.now()});
+ try{localStorage[KEY]=JSON.stringify(subs)}catch{alert('Storage full, submission not saved.');return}
+ show(5)};
+$('skip').onclick=()=>show(5);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function collage(){const s=load().reverse();
+ $('collage').innerHTML=s.length?s.map(x=>`<div class="card"><img src="${x.a}"><p>${esc(x.idea)}</p><p><b>${esc(x.name||'Anonymous')}</b></p></div>`).join(''):'<p>No submissions yet.</p>'}
+$('again').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw();
+ ['idea','name','email','code'].forEach(i=>$(i).value='');verified=false;gate();show(0)};
+show(0);
+</script>
+</body>
+</html>
