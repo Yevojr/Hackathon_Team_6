@@ -234,9 +234,12 @@ Step 3: Write a short text with three parts. Part 1: say what you see in their d
 Safety check: set nsfw to true if EITHER image is sexual, hateful, discriminatory or violent.
 
 Reply ONLY with JSON: {"nsfw":boolean,"features":[the array from step 1],"output":"the text from step 3"}`;
+// Cloudflare Worker address that holds the key. Empty = visitors paste their own key instead.
+const WORKER='https://promised-land.aloha-yevo.workers.dev';
+if(WORKER){$('key').style.display='none';document.querySelector('label[for=key]').style.display='none'}
 function b64(u){return u.split(',')[1]}
 $('run').onclick=async()=>{
- const key=$('key').value.trim();if(!key){$('status').textContent='Enter an API key first.';return}
+ const key=$('key').value.trim();if(!key&&!WORKER){$('status').textContent='Enter an API key first.';return}
  $('status').textContent='Analysing...';$('run').disabled=true;
  const prompt=PROMPT;
  try{
@@ -246,7 +249,7 @@ $('run').onclick=async()=>{
   let r,j;
   // 429/529 = Anthropic is busy or rate limited: retry with growing waits
   for(let n=1;n<=5;n++){
-   r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body});
+   r=await fetch(WORKER||'https://api.anthropic.com/v1/messages',{method:'POST',headers:WORKER?{'content-type':'application/json'}:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body});
    j=await r.json();
    if(r.status!=529&&r.status!=429)break;
    if(n<5){$('status').textContent=`Claude is busy, retrying (${n}/4)...`;await new Promise(s=>setTimeout(s,n*3000))}}
