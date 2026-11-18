@@ -45,14 +45,13 @@ main.full{max-width:none;margin:0;padding:0}
 #cw{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
 canvas#draw{touch-action:none;cursor:none;display:block;box-shadow:0 4px 18px rgba(0,60,120,.4)}
 .bar{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.35rem .7rem;background:linear-gradient(rgba(255,255,255,.92),rgba(190,235,255,.8));border-top:1px solid #fff;box-shadow:0 -3px 12px rgba(0,100,180,.25)}
-#s2 .bar{order:-1;border-top:0;border-bottom:1px solid #fff;box-shadow:0 3px 12px rgba(0,100,180,.25);position:relative;z-index:1}
 #s1.on{flex-direction:row}
 .nohead header{display:none}
-#s1.on{position:relative}
-#s1 .bar{position:absolute;left:10px;top:10px;z-index:2;flex-direction:column;align-items:stretch;flex-wrap:nowrap;width:110px;padding:.6rem;border-radius:16px;border:1px solid #fff;background:linear-gradient(rgba(255,255,255,.82),rgba(190,235,255,.72));backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,60,120,.35)}
-#s1 .bar #mute{margin-left:0!important}
-#grip{cursor:grab;text-align:center;font-size:.75rem;opacity:.7;padding:.1rem 0;touch-action:none;user-select:none}
-#grip:active{cursor:grabbing}
+#s1.on,#s2.on{position:relative}
+#s1 .bar,#s2 .bar{position:absolute;left:10px;top:10px;z-index:2;flex-direction:column;align-items:stretch;flex-wrap:nowrap;width:110px;padding:.6rem;border-radius:16px;border:1px solid #fff;background:linear-gradient(rgba(255,255,255,.82),rgba(190,235,255,.72));backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,60,120,.35)}
+#s1 .bar #mute,#s2 .bar #mute{margin-left:0!important}
+.grip{cursor:grab;text-align:center;font-size:.75rem;opacity:.7;padding:.1rem 0;touch-action:none;user-select:none}
+.grip:active{cursor:grabbing}
 #s1 .bar label{flex-direction:column;align-items:stretch}
 #s1 .bar input[type=color],#s1 .bar input[type=range]{width:100%}
 .bar button{padding:.25rem .8rem;font-size:.85rem}
@@ -87,7 +86,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 <section id="s1">
  <div id="cw"><canvas id="draw" width="800" height="1280"></canvas></div>
  <div class="bar">
-  <div id="grip" title="Drag to move">&#8943; drag &#8943;</div>
+  <div class="grip" title="Drag to move">&#8943; drag &#8943;</div>
   <label>Color <input type="color" id="color" value="#1a8a3a"></label>
   <label>Size <input type="range" id="size" min="2" max="60" value="8"></label>
   <button class="alt sel" id="pen">Pen</button>
@@ -101,6 +100,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 <section id="s2">
  <div class="stage" id="stage"></div>
  <div class="bar">
+  <div class="grip" title="Drag to move">&#8943; drag &#8943;</div>
   <button class="alt" id="full">Fullscreen for beamer</button>
   <span class="sp"></span>
   <button class="go" data-next>Next &rarr;</button>
@@ -149,8 +149,8 @@ function show(i){cur=i;secs.forEach((s,k)=>s.classList.toggle('on',k==i));
  [...$('nav').children].forEach((n,k)=>n.classList.toggle('on',k==i));
  document.querySelector('main').classList.toggle('full',i==1||i==2);
  // draw page: header hidden so the canvas gets the whole screen; the sound toggle moves into the floating toolbar
- document.body.classList.toggle('nohead',i==1);
- (i==1?document.querySelector('#s1 .bar'):document.querySelector('header')).appendChild($('mute'));
+ document.body.classList.toggle('nohead',i==1||i==2);
+ document.querySelector(i==1?'#s1 .bar':i==2?'#s2 .bar':'header').appendChild($('mute'));
  document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');
  if(i==1)fit(); if(i==3)prep3(); if(i==5)collage(); scrollTo(0,0)}
 addEventListener('resize',()=>{if(cur==1)fit()});
@@ -203,13 +203,13 @@ function stroke(a,b){ic.globalCompositeOperation=tool=='eraser'?'destination-out
  ic.beginPath();ic.moveTo(...a);ic.lineTo(b[0]+.01,b[1]);ic.stroke();redraw()}
 ['pen','eraser','fill'].forEach(k=>$(k).onclick=()=>setTool(k));
 $('color').oninput=()=>{if(tool=='eraser')setTool('pen')};
-// the toolbar can be dragged by its grip, and stays inside the window
-{const bar=document.querySelector('#s1 .bar'),grip=$('grip');let off=null;
+// the floating toolbars can be dragged by their grip, and stay inside the window
+document.querySelectorAll('.bar').forEach(bar=>{const grip=bar.querySelector('.grip');let off=null;
  grip.onpointerdown=e=>{const r=bar.getBoundingClientRect();off=[e.clientX-r.left,e.clientY-r.top];grip.setPointerCapture(e.pointerId)};
  grip.onpointermove=e=>{if(!off)return;
   bar.style.left=Math.max(0,Math.min(innerWidth-bar.offsetWidth,e.clientX-off[0]))+'px';
   bar.style.top=Math.max(0,Math.min(innerHeight-bar.offsetHeight,e.clientY-off[1]))+'px'};
- grip.onpointerup=()=>off=null}
+ grip.onpointerup=()=>off=null});
 $('clear').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw()};
 
 // ---- current image: generated placeholder of a poor park, to be replaced by the permanent photo
@@ -233,24 +233,28 @@ const SAFE=(()=>{const c=document.createElement('canvas');c.width=640;c.height=3
  x.fillStyle='#bfe9ff';x.fillRect(0,0,640,360);x.fillStyle='#7fdc7f';x.fillRect(0,260,640,100);
  x.fillStyle='#4a90c8';[[60,150,70,110],[150,110,80,150],[260,170,60,90],[350,90,90,170],[470,140,70,120]].forEach(b=>x.fillRect(...b));
  return c.toDataURL('image/jpeg',.8)})();
-let drawing=null,drawingInk=null,drawingFlagged=false;
-// Claude only gets the user's own strokes on white, so it never lists the backdrop's tree, butterfly or flowers as drawn
+let drawing=null,drawingFlagged=false;
+// Claude sees the whole canvas: the backdrop template plus whatever the user drew on it
 function prep3(){drawing=cv.toDataURL('image/jpeg',.85);
- const w=document.createElement('canvas');w.width=ink.width;w.height=ink.height;const x=w.getContext('2d');
- x.fillStyle='#fff';x.fillRect(0,0,w.width,w.height);x.drawImage(ink,0,0);drawingInk=w.toDataURL('image/jpeg',.85);
  $('p1').src=drawing;$('p2').src=curImg;$('analysis').textContent='';$('status').textContent=''}
 // Image 1 sent to Claude = the child's drawing, image 2 = the stock photo of the park.
 const PROMPT=`Topic: biodiversity
-You get two images. Image 1 is a drawing of an ideal ecosystem made by a child. Image 2 is a stock image of a Rotterdam park with these problems:
+You get two images. Image 1 is a template landscape picture that a child drew on top of, with a pen and a paint bucket, to show their ideal ecosystem. The template is the same starting point for everyone, and what the child added or changed is their own. Image 2 is a stock image of a Rotterdam park with these problems:
 * Dry soil
 * Not enough shade during summer
 * Not enough unique flowers
 * Not enough unique insects
 
-Step 1: List every plant name, animal name and relevant landscape feature in the child's drawing (image 1), with a confidence level, as a JSON array in this format:
+Step 1: List every plant name, animal name and relevant landscape feature in image 1 (the template together with the child's additions), with a confidence level, as a JSON array in this format:
 [{"name":"butterfly","type":"animal","count":2,"confidence":0.95},{"name":"tree","type":"plant","count":2,"confidence":0.95}]
-Step 2: Compare the features in the drawing (image 1) to what the Current image (image 2) shows, using the park's problems as the points of comparison.
-Step 3: Write a short text with three parts. Part 1: say what you see in their drawing, naming the features from step 1, and say that this drawing is their own ideal outlook, something unique to them that nobody else would draw the same way. Part 2: say what the Current image shows instead, mentioning up to 3 of the park's problems that stand out against the drawing. Part 3: one closing sentence saying the gap between the two is what makes their vision worth thinking about. Only describe and compare. Do NOT give advice, tips, suggestions or solutions, do NOT say what they should change, and do NOT judge or grade the drawing. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise.
+Step 2: Compare the features in the picture (image 1) to what the Current image (image 2) shows, using the park's problems as the points of comparison.
+Step 3: Write a short text for the user with four parts, in this order.
+Part 1: say in broad strokes what you see in their picture, for example the general mood and the main kinds of nature in it. Stay general: do not list every item and do not give counts or exact details.
+Part 2: say what the Current image shows instead, mentioning up to 3 of the park's problems that stand out against their picture.
+Part 3: compliment the picture based on how different and original it is compared to the Current image. The bigger the difference, the stronger the compliment. Do not repeat that it is unique or one of a kind in every reply, and do not use the same wording each time.
+Part 4: suggest exactly ONE small, light addition that would make their ideal place even better, something a 12 to 17 year old would find appealing and fun. Keep it to one short sentence, with no list and no second idea.
+Finish with one short, warm sentence of praise for the user. Informal wording is fine, but it must stay child friendly.
+Do not give any other advice or criticism, and do not grade the picture. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise.
 
 Safety check: set nsfw to true if EITHER image is sexual, hateful, discriminatory or violent.
 
@@ -266,7 +270,7 @@ $('run').onclick=async()=>{
  try{
   const img=d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64(d)}});
   // photo is shrunk to jpeg so big uploads stay under the API image size limit
-  const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawingInk),img(await thumb(curImg,1280)),{type:'text',text:prompt}]}]});
+  const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawing),img(await thumb(curImg,1280)),{type:'text',text:prompt}]}]});
   let r,j;
   // 429/529 = Anthropic is busy or rate limited: retry with growing waits
   for(let n=1;n<=5;n++){
@@ -317,22 +321,27 @@ $('again').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw();
 
 // ---- sound: start jingle once, then looping background music; clicks play button sounds
 const sStart=new Audio('start.mp3'),sBgm=new Audio('bgm.mp3'),sB1=new Audio('button1.mp3'),sB2=new Audio('button2.mp3'),sB3=new Audio('button3.mp3');
-sBgm.loop=true;sBgm.volume=.75;
-sStart.onended=()=>sBgm.play().catch(()=>{});
-let started=false,skipClick=false,muted=false;
+sBgm.loop=true;
+let started=false,skipClick=false,muted=false,ac=null,bgmGain=null;
+// an audio element's volume stops at 100%, so a gain node lifts the music to 125%; needs a user gesture, so it is set up on the first one
+function boost(){if(ac)return;ac=new AudioContext();bgmGain=ac.createGain();bgmGain.gain.value=muted?0:1.25;
+ ac.createMediaElementSource(sBgm).connect(bgmGain).connect(ac.destination);ac.resume()}
+// music must always be playing once the start sound is done or cut off; this restarts it if anything stopped it
+function ensureBgm(){if(started&&(sStart.paused||sStart.ended)&&sBgm.paused)sBgm.play().catch(()=>{})}
+sStart.onended=ensureBgm;setInterval(ensureBgm,2000);
 // browsers usually block sound before the first click: if the load-time try fails, the first click starts it
 function begin(){if(started)return false;started=true;sStart.play().catch(()=>{started=false});return true}
 begin();
 const isStart=e=>e.target.closest('#s0 [data-next]');
-addEventListener('pointerdown',e=>{if(isStart(e)){started=true;return}if(begin()&&e.target.closest('button'))skipClick=true});
-addEventListener('keydown',e=>{if(!isStart(e))begin()});
+addEventListener('pointerdown',e=>{boost();if(isStart(e)){started=true;return}if(begin()&&e.target.closest('button'))skipClick=true});
+addEventListener('keydown',e=>{boost();if(!isStart(e))begin()});
 document.addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b||b.id=='mute')return;
  // pressing Start cuts the start sound short and hands over to the music
  if(isStart(e)){sStart.pause();sBgm.play().catch(()=>{})}
  if(skipClick){skipClick=false;return} // the first click already started the start sound
  const s=b.id=='run'?sB3:b.hasAttribute('data-next')?sB1:sB2;s.currentTime=0;s.play().catch(()=>{})});
-$('mute').onclick=()=>{muted=!muted;[sStart,sBgm,sB1,sB2,sB3].forEach(a=>a.muted=muted);$('mute').textContent=muted?'Sound: off':'Sound: on'};
+$('mute').onclick=()=>{muted=!muted;[sStart,sBgm,sB1,sB2,sB3].forEach(a=>a.muted=muted);if(bgmGain)bgmGain.gain.value=muted?0:1.25;$('mute').textContent=muted?'Sound: off':'Sound: on'};
 show(0);
 </script>
 </body>
