@@ -69,7 +69,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 </head>
 <body>
 <div id="cursor"></div>
-<header><h1>Promised Land</h1><nav id="nav"></nav></header>
+<header><h1>Promised Land</h1><nav id="nav"></nav><button class="alt" id="mute" style="margin-left:auto;padding:.2rem .8rem;font-size:.85rem">Sound: on</button></header>
 <main>
 
 <section id="s0" class="on">
@@ -293,6 +293,25 @@ function collage(){const s=load().reverse();
  $('collage').innerHTML=s.length?s.map(x=>`<div class="card"><img src="${x.a}"><p>${esc(x.idea)}</p><p><b>${esc(x.name||'Anonymous')}</b></p></div>`).join(''):'<p>No submissions yet.</p>'}
 $('again').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw();
  ['idea','name','email','code'].forEach(i=>$(i).value='');verified=false;gate();show(0)};
+
+// ---- sound: start jingle once, then looping background music; clicks play button sounds
+const sStart=new Audio('start.mp3'),sBgm=new Audio('bgm.mp3'),sB1=new Audio('button1.mp3'),sB2=new Audio('button2.mp3'),sB3=new Audio('button3.mp3');
+sBgm.loop=true;sBgm.volume=.3;
+sStart.onended=()=>sBgm.play().catch(()=>{});
+let started=false,skipClick=false,muted=false;
+// browsers usually block sound before the first click: if the load-time try fails, the first click starts it
+function begin(){if(started)return false;started=true;sStart.play().catch(()=>{started=false});return true}
+begin();
+const isStart=e=>e.target.closest('#s0 [data-next]');
+addEventListener('pointerdown',e=>{if(isStart(e)){started=true;return}if(begin()&&e.target.closest('button'))skipClick=true});
+addEventListener('keydown',e=>{if(!isStart(e))begin()});
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b||b.id=='mute')return;
+ // pressing Start cuts the start sound short and hands over to the music
+ if(isStart(e)){sStart.pause();sBgm.play().catch(()=>{})}
+ if(skipClick){skipClick=false;return} // the first click already started the start sound
+ const s=b.id=='run'?sB3:b.hasAttribute('data-next')?sB1:sB2;s.currentTime=0;s.play().catch(()=>{})});
+$('mute').onclick=()=>{muted=!muted;[sStart,sBgm,sB1,sB2,sB3].forEach(a=>a.muted=muted);$('mute').textContent=muted?'Sound: off':'Sound: on'};
 show(0);
 </script>
 </body>
