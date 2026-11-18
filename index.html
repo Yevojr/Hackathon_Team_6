@@ -312,9 +312,9 @@ $('again').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw();
 const sStart=new Audio('start.mp3'),sBgm=new Audio('bgm.mp3'),sB1=new Audio('button1.mp3'),sB2=new Audio('button2.mp3'),sB3=new Audio('button3.mp3');
 sBgm.loop=true;
 let started=false,skipClick=false,muted=false,ac=null,bgmGain=null;
-// an audio element's volume stops at 100%, so a gain node lifts the music to 125%; needs a user gesture, so it is set up on the first one
-function boost(){if(ac)return;ac=new AudioContext();bgmGain=ac.createGain();bgmGain.gain.value=muted?0:1.25;
- ac.createMediaElementSource(sBgm).connect(bgmGain).connect(ac.destination);ac.resume()}
+// an audio element's volume stops at 100%, so a gain node lifts the start sound and the music to 140%; needs a user gesture, so it is set up on the first one
+function boost(){if(ac)return;ac=new AudioContext();bgmGain=ac.createGain();bgmGain.gain.value=muted?0:1.4;
+ bgmGain.connect(ac.destination);[sBgm,sStart].forEach(a=>ac.createMediaElementSource(a).connect(bgmGain));ac.resume()}
 // music must always be playing once the start sound is done or cut off; this restarts it if anything stopped it
 function ensureBgm(){if(started&&(sStart.paused||sStart.ended)&&sBgm.paused)sBgm.play().catch(()=>{})}
 sStart.onended=ensureBgm;setInterval(ensureBgm,2000);
@@ -330,7 +330,7 @@ document.addEventListener('click',e=>{
  if(isStart(e)){sStart.pause();sBgm.play().catch(()=>{})}
  if(skipClick){skipClick=false;return} // the first click already started the start sound
  const s=b.id=='run'?sB3:b.hasAttribute('data-next')?sB1:sB2;s.currentTime=0;s.play().catch(()=>{})});
-$('mute').onclick=()=>{muted=!muted;[sStart,sBgm,sB1,sB2,sB3].forEach(a=>a.muted=muted);if(bgmGain)bgmGain.gain.value=muted?0:1.25;$('mute').textContent=muted?'Sound: off':'Sound: on'};
+$('mute').onclick=()=>{muted=!muted;[sStart,sBgm,sB1,sB2,sB3].forEach(a=>a.muted=muted);if(bgmGain)bgmGain.gain.value=muted?0:1.4;$('mute').textContent=muted?'Sound: off':'Sound: on'};
 show(0);
 </script>
 </body>
