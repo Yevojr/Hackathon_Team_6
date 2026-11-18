@@ -109,6 +109,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
  <div class="stage" id="stage"></div>
  <div class="bar">
   <div class="grip" title="Drag to move">&#8943; drag &#8943;</div>
+  <button class="alt" data-back>&larr; Back</button>
   <button class="go" data-next>Next &rarr;</button>
  </div>
 </section>
@@ -121,7 +122,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
   <input type="password" id="key" placeholder="Paste key (kept in memory only)" autocomplete="off">
   <div class="row"><button id="run">Analyse</button><span id="status"></span></div>
  </div>
- <div class="row right"><button class="go" data-next>Next &rarr;</button></div>
+ <div class="row right"><button class="alt" data-back>&larr; Back</button><button class="go" data-next>Next &rarr;</button></div>
 </section>
 
 <section id="s4">
@@ -144,7 +145,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 <button class="go" id="again" hidden>Start over</button>
 <div id="amodal" hidden>
  <div id="analysis"></div>
- <div class="row right"><button class="alt" id="aclose">Close</button><button class="go" data-next>Next &rarr;</button></div>
+ <div class="row right"><button class="alt" id="aclose">Close</button><button class="alt" data-back>&larr; Back</button><button class="go" data-next>Next &rarr;</button></div>
 </div>
 <script src="backdrop.js"></script>
 <script>
@@ -162,6 +163,8 @@ function show(i){cur=i;$('amodal').hidden=true;$('again').hidden=i!=5;secs.forEa
  if(i==1)fit(); if(i==3)prep3(); if(i==5)collage(); scrollTo(0,0)}
 addEventListener('resize',()=>{if(cur==1)fit()});
 document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>show(cur+1));
+// Back goes one step back in the flow, so the drawing can be changed; the drawing itself is kept
+document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>show(cur-1));
 
 // ---- drawing
 const cv=$('draw'),ctx=cv.getContext('2d'),cu=$('cursor');
