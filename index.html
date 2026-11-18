@@ -42,8 +42,8 @@ main.full{max-width:none;margin:0;padding:0}
 #s2 .stage{flex:1;min-height:0;border-radius:0}
 #s2 .stage img{width:100%;height:100%;max-height:none;object-fit:contain}
 #s1.on{display:flex;flex-direction:column;height:calc(100vh - var(--hh,60px));padding:0;border-radius:0;border:0;box-shadow:none;background:none;backdrop-filter:none}
-#cw{flex:1;min-height:0;position:relative;background:#fff}
-canvas#draw{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:none;display:block}
+#cw{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+canvas#draw{touch-action:none;cursor:none;display:block;box-shadow:0 4px 18px rgba(0,60,120,.4)}
 .bar{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.35rem .7rem;background:linear-gradient(rgba(255,255,255,.92),rgba(190,235,255,.8));border-top:1px solid #fff;box-shadow:0 -3px 12px rgba(0,100,180,.25)}
 #s2 .bar{order:-1;border-top:0;border-bottom:1px solid #fff;box-shadow:0 3px 12px rgba(0,100,180,.25);position:relative;z-index:1}
 #s1.on{flex-direction:row}
@@ -80,7 +80,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 </section>
 
 <section id="s1">
- <div id="cw"><canvas id="draw" width="1280" height="720"></canvas></div>
+ <div id="cw"><canvas id="draw" width="800" height="1280"></canvas></div>
  <div class="bar">
   <label>Color <input type="color" id="color" value="#1a8a3a"></label>
   <label>Size <input type="range" id="size" min="2" max="60" value="8"></label>
@@ -133,6 +133,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 </section>
 
 </main>
+<script src="backdrop.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const names=["Start","Draw","Current","Analysis","Your idea","Thanks"];
@@ -150,16 +151,16 @@ document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>show(cur+1));
 const cv=$('draw'),ctx=cv.getContext('2d'),cu=$('cursor');
 let tool='pen',down=false,last;
 function setTool(t){tool=t;['pen','eraser','fill'].forEach(k=>$(k).classList.toggle('sel',k==t))}
-// ponytail: plain white base; the permanent backdrop image will be drawn here later
-function paintBase(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height)}
+// the permanent backdrop is the canvas base; it has the same 800x1280 ratio as the canvas, so it fills it exactly
+const bd=new Image();let bdReady=false;bd.onload=()=>{bdReady=true;redraw()};bd.src=BACKDROP_SRC;
+function paintBase(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);if(bdReady)ctx.drawImage(bd,0,0,cv.width,cv.height)}
 paintBase();
 // eraser draws on a separate layer so it never wipes the backdrop
 const ink=document.createElement('canvas');ink.width=cv.width;ink.height=cv.height;const ic=ink.getContext('2d');
-// canvas fills the area between header and toolbar; strokes are kept when the window resizes
+// the drawing keeps its 800x1280 pixels; only its on-screen size changes to fit the free area
 function fit(){document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');
- const w=$('cw').clientWidth,h=$('cw').clientHeight;if(!w||!h||(cv.width==w&&cv.height==h))return;
- const old=document.createElement('canvas');old.width=ink.width;old.height=ink.height;old.getContext('2d').drawImage(ink,0,0);
- cv.width=ink.width=w;cv.height=ink.height=h;ic.drawImage(old,0,0);redraw()}
+ const w=$('cw').clientWidth,h=$('cw').clientHeight;if(!w||!h)return;
+ const s=Math.min(w/cv.width,h/cv.height);cv.style.width=cv.width*s+'px';cv.style.height=cv.height*s+'px'}
 function redraw(){paintBase();ctx.drawImage(ink,0,0)}
 function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]}
 function sz(){return +$('size').value}
@@ -216,8 +217,12 @@ const SAFE=(()=>{const c=document.createElement('canvas');c.width=640;c.height=3
  x.fillStyle='#bfe9ff';x.fillRect(0,0,640,360);x.fillStyle='#7fdc7f';x.fillRect(0,260,640,100);
  x.fillStyle='#4a90c8';[[60,150,70,110],[150,110,80,150],[260,170,60,90],[350,90,90,170],[470,140,70,120]].forEach(b=>x.fillRect(...b));
  return c.toDataURL('image/jpeg',.8)})();
-let drawing=null,drawingFlagged=false;
-function prep3(){drawing=cv.toDataURL('image/jpeg',.85);$('p1').src=drawing;$('p2').src=curImg;$('analysis').textContent='';$('status').textContent=''}
+let drawing=null,drawingInk=null,drawingFlagged=false;
+// Claude only gets the user's own strokes on white, so it never lists the backdrop's tree, butterfly or flowers as drawn
+function prep3(){drawing=cv.toDataURL('image/jpeg',.85);
+ const w=document.createElement('canvas');w.width=ink.width;w.height=ink.height;const x=w.getContext('2d');
+ x.fillStyle='#fff';x.fillRect(0,0,w.width,w.height);x.drawImage(ink,0,0);drawingInk=w.toDataURL('image/jpeg',.85);
+ $('p1').src=drawing;$('p2').src=curImg;$('analysis').textContent='';$('status').textContent=''}
 // Image 1 sent to Claude = the child's drawing, image 2 = the stock photo of the park.
 const PROMPT=`Topic: biodiversity
 You get two images. Image 1 is a drawing of an ideal ecosystem made by a child. Image 2 is a stock image of a Rotterdam park with these problems:
@@ -245,7 +250,7 @@ $('run').onclick=async()=>{
  try{
   const img=d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64(d)}});
   // photo is shrunk to jpeg so big uploads stay under the API image size limit
-  const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawing),img(await thumb(curImg,1280)),{type:'text',text:prompt}]}]});
+  const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawingInk),img(await thumb(curImg,1280)),{type:'text',text:prompt}]}]});
   let r,j;
   // 429/529 = Anthropic is busy or rate limited: retry with growing waits
   for(let n=1;n<=5;n++){
@@ -296,7 +301,7 @@ $('again').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw();
 
 // ---- sound: start jingle once, then looping background music; clicks play button sounds
 const sStart=new Audio('start.mp3'),sBgm=new Audio('bgm.mp3'),sB1=new Audio('button1.mp3'),sB2=new Audio('button2.mp3'),sB3=new Audio('button3.mp3');
-sBgm.loop=true;sBgm.volume=.3;
+sBgm.loop=true;sBgm.volume=.75;
 sStart.onended=()=>sBgm.play().catch(()=>{});
 let started=false,skipClick=false,muted=false;
 // browsers usually block sound before the first click: if the load-time try fails, the first click starts it
