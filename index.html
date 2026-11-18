@@ -255,9 +255,12 @@ Finish with one short, warm sentence of praise for the user. Informal wording is
 If the canvas is blank or you cannot see anything drawn, kindly say that nothing has been drawn yet and encourage them to give it a try, and skip parts 3 and 4.
 Do not give any other advice or criticism, and do not grade the drawing. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise: the whole text must stay under 120 words.
 
-Safety check: set nsfw to true if image 1 is sexual, hateful, discriminatory or violent.
+Safety check: set the nsfw tag to true if image 1 is sexual, hateful, discriminatory or violent.
 
-Reply ONLY with JSON: {"nsfw":boolean,"features":[the array from step 1],"output":"the text from step 3"}`;
+Reply in exactly this format, with nothing outside the tags:
+<features>the JSON array from step 1</features>
+<nsfw>true or false</nsfw>
+<answer>the text from step 3</answer>`;
 // Cloudflare Worker address that holds the key. Empty = visitors paste their own key instead.
 const WORKER='https://promised-land.aloha-yevo.workers.dev';
 if(WORKER){$('key').style.display='none';document.querySelector('label[for=key]').style.display='none'}
@@ -271,21 +274,32 @@ $('run').onclick=async()=>{
   const img=d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64(d)}});
   // photo is shrunk to jpeg so big uploads stay under the API image size limit
   const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawing),img(await thumb(curImg,800)),{type:'text',text:prompt}]}]});
-  let r,j;
   // 429/529 = Anthropic is busy or rate limited: retry with growing waits
-  for(let n=1;n<=5;n++){
-   r=await fetch(WORKER||'https://api.anthropic.com/v1/messages',{method:'POST',headers:WORKER?{'content-type':'application/json'}:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body});
-   j=await r.json();
-   if(r.status!=529&&r.status!=429)break;
-   if(n<5){$('status').textContent=`Claude is busy, retrying (${n}/4)...`;await new Promise(s=>setTimeout(s,n*3000))}}
-  if(!r.ok)throw new Error(j.error?.message||r.status);
-  const txt=j.content.map(c=>c.text||'').join('');
-  const o=JSON.parse(txt.slice(txt.indexOf('{'),txt.lastIndexOf('}')+1));
+  const ask=async()=>{
+   let r,j;
+   for(let n=1;n<=5;n++){
+    r=await fetch(WORKER||'https://api.anthropic.com/v1/messages',{method:'POST',headers:WORKER?{'content-type':'application/json'}:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body});
+    j=await r.json();
+    if(r.status!=529&&r.status!=429)break;
+    if(n<5){$('status').textContent=`Claude is busy, retrying (${n}/4)...`;await new Promise(s=>setTimeout(s,n*3000))}}
+   if(!r.ok)throw new Error(j.error?.message||r.status);
+   const txt=j.content.map(c=>c.text||'').join('');
+   const tag=t=>(txt.match(new RegExp('<'+t+'>([\\s\\S]*?)(?:</'+t+'>|$)'))||[])[1]||'';
+   const answer=tag('answer').trim();
+   if(!answer){const e=new Error('no usable answer');e.retry=true;throw e}
+   return{answer,nsfw:/true/i.test(tag('nsfw'))}};
+  // safety net: if the reply has no usable answer, ask again (up to 3 tries)
+  let o;
+  for(let attempt=1;;attempt++){
+   try{o=await ask();break}
+   catch(e){if(e.retry&&attempt<3){$('status').textContent='Trying again...';continue}throw e}}
   if(o.nsfw){drawing=SAFE;drawingFlagged=true;$('p1').src=SAFE;
    $('analysis').textContent='A flagged image was replaced with a safe placeholder.\n\n'}
   else $('analysis').textContent='';
-  $('analysis').textContent+=o.output;$('status').textContent='Done';$('run').textContent='Show analysis';$('amodal').hidden=false;
- }catch(e){$('status').textContent='Error: '+e.message}
+  $('analysis').textContent+=o.answer;$('status').textContent='Done';$('run').textContent='Show analysis';$('amodal').hidden=false;
+ }catch(e){console.error(e);
+  // friendly message for users; the real reason is in the browser console
+  $('status').textContent=e.retry?'The AI did not give a usable answer. Please press Analyse again.':'Something went wrong. Please press Analyse again in a moment.'}
  $('run').disabled=false};
 
 $('aclose').onclick=()=>$('amodal').hidden=true;
