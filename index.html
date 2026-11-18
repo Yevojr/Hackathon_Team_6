@@ -47,7 +47,12 @@ canvas#draw{touch-action:none;cursor:none;display:block;box-shadow:0 4px 18px rg
 .bar{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.35rem .7rem;background:linear-gradient(rgba(255,255,255,.92),rgba(190,235,255,.8));border-top:1px solid #fff;box-shadow:0 -3px 12px rgba(0,100,180,.25)}
 #s2 .bar{order:-1;border-top:0;border-bottom:1px solid #fff;box-shadow:0 3px 12px rgba(0,100,180,.25);position:relative;z-index:1}
 #s1.on{flex-direction:row}
-#s1 .bar{order:-1;flex-direction:column;align-items:stretch;flex-wrap:nowrap;width:110px;padding:.6rem;overflow-y:auto;border-top:0;border-right:1px solid #fff;box-shadow:3px 0 12px rgba(0,100,180,.25);position:relative;z-index:1}
+.nohead header{display:none}
+#s1.on{position:relative}
+#s1 .bar{position:absolute;left:10px;top:10px;z-index:2;flex-direction:column;align-items:stretch;flex-wrap:nowrap;width:110px;padding:.6rem;border-radius:16px;border:1px solid #fff;background:linear-gradient(rgba(255,255,255,.82),rgba(190,235,255,.72));backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,60,120,.35)}
+#s1 .bar #mute{margin-left:0!important}
+#grip{cursor:grab;text-align:center;font-size:.75rem;opacity:.7;padding:.1rem 0;touch-action:none;user-select:none}
+#grip:active{cursor:grabbing}
 #s1 .bar label{flex-direction:column;align-items:stretch}
 #s1 .bar input[type=color],#s1 .bar input[type=range]{width:100%}
 .bar button{padding:.25rem .8rem;font-size:.85rem}
@@ -82,6 +87,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 <section id="s1">
  <div id="cw"><canvas id="draw" width="800" height="1280"></canvas></div>
  <div class="bar">
+  <div id="grip" title="Drag to move">&#8943; drag &#8943;</div>
   <label>Color <input type="color" id="color" value="#1a8a3a"></label>
   <label>Size <input type="range" id="size" min="2" max="60" value="8"></label>
   <button class="alt sel" id="pen">Pen</button>
@@ -142,6 +148,9 @@ $('nav').innerHTML=names.map(n=>`<span>${n}</span>`).join('');let cur=0;
 function show(i){cur=i;secs.forEach((s,k)=>s.classList.toggle('on',k==i));
  [...$('nav').children].forEach((n,k)=>n.classList.toggle('on',k==i));
  document.querySelector('main').classList.toggle('full',i==1||i==2);
+ // draw page: header hidden so the canvas gets the whole screen; the sound toggle moves into the floating toolbar
+ document.body.classList.toggle('nohead',i==1);
+ (i==1?document.querySelector('#s1 .bar'):document.querySelector('header')).appendChild($('mute'));
  document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');
  if(i==1)fit(); if(i==3)prep3(); if(i==5)collage(); scrollTo(0,0)}
 addEventListener('resize',()=>{if(cur==1)fit()});
@@ -194,6 +203,13 @@ function stroke(a,b){ic.globalCompositeOperation=tool=='eraser'?'destination-out
  ic.beginPath();ic.moveTo(...a);ic.lineTo(b[0]+.01,b[1]);ic.stroke();redraw()}
 ['pen','eraser','fill'].forEach(k=>$(k).onclick=()=>setTool(k));
 $('color').oninput=()=>{if(tool=='eraser')setTool('pen')};
+// the toolbar can be dragged by its grip, and stays inside the window
+{const bar=document.querySelector('#s1 .bar'),grip=$('grip');let off=null;
+ grip.onpointerdown=e=>{const r=bar.getBoundingClientRect();off=[e.clientX-r.left,e.clientY-r.top];grip.setPointerCapture(e.pointerId)};
+ grip.onpointermove=e=>{if(!off)return;
+  bar.style.left=Math.max(0,Math.min(innerWidth-bar.offsetWidth,e.clientX-off[0]))+'px';
+  bar.style.top=Math.max(0,Math.min(innerHeight-bar.offsetHeight,e.clientY-off[1]))+'px'};
+ grip.onpointerup=()=>off=null}
 $('clear').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw()};
 
 // ---- current image: generated placeholder of a poor park, to be replaced by the permanent photo
