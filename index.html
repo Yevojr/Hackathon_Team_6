@@ -68,6 +68,13 @@ canvas#draw{position:absolute;inset:0;width:100%;height:100%;touch-action:none;c
 .card img{width:100%;border-radius:8px;display:block;margin-bottom:.3rem}
 .card p{margin:.2rem;font-size:.85rem}
 footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
+/* Portrait beamer wall: the props (hanging clouds, the tree and the hills) cover the edges, so the Start text sits in the flat white middle.
+   Zone measured from the photo as fractions of the projection: about 15%-73% across, 28%-63% down. */
+#amodal{position:fixed;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90vw,640px);padding:1.2rem;border-radius:22px;background:linear-gradient(rgba(255,255,255,.93),rgba(225,245,255,.9));border:1px solid #fff;box-shadow:0 12px 40px rgba(0,60,120,.45);backdrop-filter:blur(8px)}
+#amodal[hidden]{display:none}
+@media (orientation:portrait){#s0.on,#s3.on,#s4.on{position:fixed;left:15vw;top:28vh;width:58vw}
+ #s3 h2{display:none}#s3 .pair img{max-height:22vh;object-fit:contain}
+ #amodal{left:15vw;top:28vh;transform:none;width:58vw}#analysis{font-size:.95rem;line-height:1.4}}
 </style>
 </head>
 <body>
@@ -111,7 +118,6 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
   <label for="key">Claude API key</label>
   <input type="password" id="key" placeholder="Paste key (kept in memory only)" autocomplete="off">
   <div class="row"><button id="run">Analyse</button><span id="status"></span></div>
-  <div id="analysis"></div>
  </div>
  <div class="row right"><button class="go" data-next>Next &rarr;</button></div>
 </section>
@@ -120,10 +126,6 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
  <h2>What creative solution can you come up with for the current situation?</h2>
  <label for="idea">Your idea</label><textarea id="idea" rows="6"></textarea>
  <label for="name">Name (optional)</label><input type="text" id="name">
- <label for="email">Email (optional, only needed if you want to be contacted about the prize)</label>
- <div class="row" style="margin:0"><input type="email" id="email" style="flex:1"><button class="alt" id="sendcode">Send code</button></div>
- <div class="row"><input type="text" id="code" placeholder="6-digit code" style="flex:1" disabled><button class="alt" id="verify" disabled>Verify</button></div>
- <div id="vstat"></div>
  <div class="row right"><button class="alt" id="skip">Skip</button><button class="go" id="submit" disabled>Submit &rarr;</button></div>
  <footer class="fine">The most creative solution of the week, gets a bouquet of flowers of their choice</footer>
 </section>
@@ -136,13 +138,18 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 </section>
 
 </main>
+<!-- analysis text pops up over the two pictures; it sits outside the page card so it can be positioned on the screen -->
+<div id="amodal" hidden>
+ <div id="analysis"></div>
+ <div class="row right"><button class="alt" id="aclose">Close</button><button class="go" data-next>Next &rarr;</button></div>
+</div>
 <script src="backdrop.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const names=["Start","Draw","Current","Analysis","Your idea","Thanks"];
 const secs=[...document.querySelectorAll('section')];
 $('nav').innerHTML=names.map(n=>`<span>${n}</span>`).join('');let cur=0;
-function show(i){cur=i;secs.forEach((s,k)=>s.classList.toggle('on',k==i));
+function show(i){cur=i;$('amodal').hidden=true;secs.forEach((s,k)=>s.classList.toggle('on',k==i));
  [...$('nav').children].forEach((n,k)=>n.classList.toggle('on',k==i));
  document.querySelector('main').classList.toggle('full',i==1||i==2);
  // draw page: header hidden so the canvas gets the whole screen; the sound toggle moves into the floating toolbar
@@ -221,7 +228,7 @@ const SAFE=(()=>{const c=document.createElement('canvas');c.width=640;c.height=3
 let drawing=null,drawingFlagged=false;
 // Claude sees the drawing exactly as it is on the canvas
 function prep3(){drawing=cv.toDataURL('image/jpeg',.85);
- $('p1').src=drawing;$('p2').src=curImg;$('analysis').textContent='';$('status').textContent=''}
+ $('p1').src=drawing;$('p2').src=curImg;$('analysis').textContent='';$('status').textContent='';$('run').textContent='Analyse'}
 // Image 1 sent to Claude = the child's drawing on a blank canvas, image 2 = the Current picture of the park.
 const PROMPT=`Topic: biodiversity
 You get two images. Image 1 is a drawing of an ideal ecosystem made by a child on a blank canvas. Image 2 is the Current situation: a picture of a Rotterdam park with these problems:
@@ -240,7 +247,7 @@ Part 3: compliment the drawing based on how different and original it is compare
 Part 4: give the user advice for making a start on turning the Current image into their drawing. Give a first step, and optionally a second step. Each step must be something a 12 to 17 year old could realistically do themselves or with friends, family, school or neighbours, and each must be small enough to actually start. Make them link to what is missing in the Current image compared to their drawing. Write each step as one short sentence. Never give more than two steps.
 Finish with one short, warm sentence of praise for the user. Informal wording is fine, but it must stay child friendly.
 If the canvas is blank or you cannot see anything drawn, kindly say that nothing has been drawn yet and encourage them to give it a try, and skip parts 3 and 4.
-Do not give any other advice or criticism, and do not grade the drawing. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise.
+Do not give any other advice or criticism, and do not grade the drawing. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise: the whole text must stay under 120 words.
 
 Safety check: set nsfw to true if image 1 is sexual, hateful, discriminatory or violent.
 
@@ -250,6 +257,7 @@ const WORKER='https://promised-land.aloha-yevo.workers.dev';
 if(WORKER){$('key').style.display='none';document.querySelector('label[for=key]').style.display='none'}
 function b64(u){return u.split(',')[1]}
 $('run').onclick=async()=>{
+ if($('analysis').textContent){$('amodal').hidden=false;return} // already analysed: just show the text again
  const key=$('key').value.trim();if(!key&&!WORKER){$('status').textContent='Enter an API key first.';return}
  $('status').textContent='Analysing...';$('run').disabled=true;
  const prompt=PROMPT;
@@ -270,22 +278,14 @@ $('run').onclick=async()=>{
   if(o.nsfw){drawing=SAFE;drawingFlagged=true;$('p1').src=SAFE;
    $('analysis').textContent='A flagged image was replaced with a safe placeholder.\n\n'}
   else $('analysis').textContent='';
-  $('analysis').textContent+=o.output;$('status').textContent='Done';
+  $('analysis').textContent+=o.output;$('status').textContent='Done';$('run').textContent='Show analysis';$('amodal').hidden=false;
  }catch(e){$('status').textContent='Error: '+e.message}
  $('run').disabled=false};
 
-// ---- email "auth" (demo only, no server)
-let sentCode=null,verified=false;
-// email is optional; if one is typed it must be verified
-function gate(){$('submit').disabled=!(($('email').value.trim()===''||verified)&&$('idea').value.trim())}
+$('aclose').onclick=()=>$('amodal').hidden=true;
+// the idea is required, the name is optional
+function gate(){$('submit').disabled=!$('idea').value.trim()}
 ['idea','name'].forEach(i=>$(i).oninput=gate);
-$('email').oninput=()=>{verified=false;gate()};
-$('sendcode').onclick=()=>{if(!$('email').validity.valid||!$('email').value){$('vstat').textContent='Enter a valid email.';return}
- sentCode=String(100000+Math.floor(Math.random()*900000));
- $('vstat').textContent='Demo mode: no email is sent. Your code is '+sentCode;
- $('code').disabled=$('verify').disabled=false};
-$('verify').onclick=()=>{verified=$('code').value.trim()===sentCode;
- $('vstat').textContent=verified?'Email verified.':'Wrong code.';gate()};
 
 // ---- storage + collage
 function thumb(u,w){return new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=Math.round(w*i.height/i.width);
@@ -294,7 +294,7 @@ const KEY='promisedland_subs';
 const load=()=>{try{return JSON.parse(localStorage[KEY]||'[]')}catch{return[]}};
 $('submit').onclick=async()=>{
  const subs=load();
- subs.push({name:$('name').value.trim(),idea:$('idea').value.trim(),email:verified?$('email').value.trim():'',
+ subs.push({name:$('name').value.trim(),idea:$('idea').value.trim(),
   a:await thumb(drawing,360),t:Date.now()});
  try{localStorage[KEY]=JSON.stringify(subs)}catch{alert('Storage full, submission not saved.');return}
  show(5)};
@@ -303,7 +303,7 @@ const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&qu
 function collage(){const s=load().reverse();
  $('collage').innerHTML=s.length?s.map(x=>`<div class="card"><img src="${x.a}"><p>${esc(x.idea)}</p><p><b>${esc(x.name||'Anonymous')}</b></p></div>`).join(''):'<p>No submissions yet.</p>'}
 $('again').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw();
- ['idea','name','email','code'].forEach(i=>$(i).value='');verified=false;gate();show(0)};
+ ['idea','name'].forEach(i=>$(i).value='');gate();show(0)};
 
 // ---- sound: start jingle once, then looping background music; clicks play button sounds
 const sStart=new Audio('start.mp3'),sBgm=new Audio('bgm.mp3'),sB1=new Audio('button1.mp3'),sB2=new Audio('button2.mp3'),sB3=new Audio('button3.mp3');
