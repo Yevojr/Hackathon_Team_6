@@ -19,7 +19,7 @@ header{display:flex;align-items:center;gap:1rem;padding:.7rem 1.2rem;background:
 header h1{margin:0;font-size:1.3rem;text-shadow:0 1px 0 #fff}
 nav{display:flex;gap:.4rem;flex-wrap:wrap}
 nav span{padding:.25rem .8rem;border-radius:99px;font-size:.85rem;background:rgba(255,255,255,.5);border:1px solid #fff;opacity:.6}
-nav span.on{opacity:1;background:linear-gradient(#8be28b,#2fb52f);color:#fff;text-shadow:0 1px 1px #0006;box-shadow:inset 0 1px 0 #fff9}
+nav span.on{opacity:1;background:linear-gradient(#8be28b,#2fb52f);color:#000;text-shadow:0 1px 0 #fff8;box-shadow:inset 0 1px 0 #fff9}
 main{max-width:1000px;margin:1.2rem auto;padding:0 1rem}
 section{display:none;padding:1.5rem;border-radius:22px;background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.45));
  border:1px solid #fff;box-shadow:0 10px 35px rgba(0,90,170,.3),inset 0 1px 0 #fff;backdrop-filter:blur(8px)}
@@ -28,9 +28,9 @@ h2{margin-top:0}
 button,.btn{font:inherit;cursor:pointer;padding:.55rem 1.3rem;border-radius:99px;border:1px solid #1c7ec4;color:#fff;text-shadow:0 1px 1px #0005;
  background:linear-gradient(#7fd5ff 0,#2a9df0 50%,#1585db 51%,#4dbaff 100%);box-shadow:inset 0 1px 0 #fffb,0 3px 8px rgba(0,80,160,.35)}
 button:hover,.btn:hover{filter:brightness(1.1)}
-button.go{background:linear-gradient(#a6f0a6 0,#3cc43c 50%,#25a825 51%,#6fe06f 100%);border-color:#1d8a1d}
+button.go{background:linear-gradient(#a6f0a6 0,#3cc43c 50%,#25a825 51%,#6fe06f 100%);border-color:#1d8a1d;color:#000;text-shadow:0 1px 0 #fff8}
 button.alt{background:linear-gradient(#fff,#cfe9f7);color:var(--ink);text-shadow:none;border-color:#9bc}
-button.alt.sel{background:linear-gradient(#8be28b,#2fb52f);color:#fff;text-shadow:0 1px 1px #0006;border:2px solid #167516;box-shadow:inset 0 2px 5px #0005,0 0 0 3px #fff,0 0 10px #2fb52f}
+button.alt.sel{background:linear-gradient(#8be28b,#2fb52f);color:#000;text-shadow:0 1px 0 #fff8;border:2px solid #167516;box-shadow:inset 0 2px 5px #0005,0 0 0 3px #fff,0 0 10px #2fb52f}
 button:disabled{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.7rem 0}
 .right{justify-content:flex-end}
@@ -72,9 +72,11 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
    Zone measured from the photo as fractions of the projection: about 15%-73% across, 28%-63% down. */
 #amodal{position:fixed;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90vw,640px);padding:1.2rem;border-radius:22px;background:linear-gradient(rgba(255,255,255,.93),rgba(225,245,255,.9));border:1px solid #fff;box-shadow:0 12px 40px rgba(0,60,120,.45);backdrop-filter:blur(8px)}
 #amodal[hidden]{display:none}
+#again{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:2rem;font-size:1.3rem;padding:.8rem 2.4rem;box-shadow:0 6px 18px rgba(0,80,0,.45),inset 0 1px 0 #fffb}
 @media (orientation:portrait){#s0.on,#s3.on,#s4.on{position:fixed;left:15vw;top:28vh;width:58vw}
  #s3 h2{display:none}#s3 .pair img{max-height:22vh;object-fit:contain}
- #amodal{left:15vw;top:28vh;transform:none;width:58vw}#analysis{font-size:.95rem;line-height:1.4}}
+ #amodal{left:15vw;top:28vh;transform:none;width:58vw}
+ #again{left:44vw;bottom:auto;top:54vh}#analysis{font-size:.95rem;line-height:1.4}}
 </style>
 </head>
 <body>
@@ -134,11 +136,12 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
  <h2>Thank you!</h2>
  <p>Thank you for sharing your idea. Here are other submissions.</p>
  <div class="collage" id="collage"></div>
- <div class="row right"><button class="alt" id="again">Start over</button></div>
 </section>
 
 </main>
 <!-- analysis text pops up over the two pictures; it sits outside the page card so it can be positioned on the screen -->
+<!-- floating Start over button for the Thanks page; outside the page card so it can float on the screen -->
+<button class="go" id="again" hidden>Start over</button>
 <div id="amodal" hidden>
  <div id="analysis"></div>
  <div class="row right"><button class="alt" id="aclose">Close</button><button class="go" data-next>Next &rarr;</button></div>
@@ -149,7 +152,7 @@ const $=id=>document.getElementById(id);
 const names=["Start","Draw","Current","Analysis","Your idea","Thanks"];
 const secs=[...document.querySelectorAll('section')];
 $('nav').innerHTML=names.map(n=>`<span>${n}</span>`).join('');let cur=0;
-function show(i){cur=i;$('amodal').hidden=true;secs.forEach((s,k)=>s.classList.toggle('on',k==i));
+function show(i){cur=i;$('amodal').hidden=true;$('again').hidden=i!=5;secs.forEach((s,k)=>s.classList.toggle('on',k==i));
  [...$('nav').children].forEach((n,k)=>n.classList.toggle('on',k==i));
  document.querySelector('main').classList.toggle('full',i==1||i==2);
  // draw page: header hidden so the canvas gets the whole screen; the sound toggle moves into the floating toolbar
