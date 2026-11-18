@@ -42,8 +42,8 @@ main.full{max-width:none;margin:0;padding:0}
 #s2 .stage{flex:1;min-height:0;border-radius:0}
 #s2 .stage img{width:100%;height:100%;max-height:none;object-fit:contain}
 #s1.on{display:flex;flex-direction:column;height:calc(100vh - var(--hh,60px));padding:0;border-radius:0;border:0;box-shadow:none;background:none;backdrop-filter:none}
-#cw{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
-canvas#draw{touch-action:none;cursor:none;display:block;box-shadow:0 4px 18px rgba(0,60,120,.4)}
+#cw{flex:1;min-height:0;position:relative;background:#fff}
+canvas#draw{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:none;display:block}
 .bar{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.35rem .7rem;background:linear-gradient(rgba(255,255,255,.92),rgba(190,235,255,.8));border-top:1px solid #fff;box-shadow:0 -3px 12px rgba(0,100,180,.25)}
 #s1.on{flex-direction:row}
 .nohead header{display:none}
@@ -60,7 +60,6 @@ canvas#draw{touch-action:none;cursor:none;display:block;box-shadow:0 4px 18px rg
 #cursor{position:fixed;pointer-events:none;border:2px solid #000;outline:1px solid #fff;border-radius:50%;z-index:20;display:none;transform:translate(-50%,-50%)}
 .stage{background:#000;border-radius:14px;min-height:300px;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .stage img{max-width:100%;max-height:70vh}
-.stage:fullscreen{border-radius:0}.stage:fullscreen img{max-height:100vh;width:100%;object-fit:contain}
 .half{padding:1rem;border-radius:16px;background:rgba(255,255,255,.65);border:1px solid #fff;margin-bottom:1rem}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}.pair img{width:100%;border-radius:10px;background:#fff}
 #analysis{white-space:pre-wrap;line-height:1.5}
@@ -84,7 +83,7 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
 </section>
 
 <section id="s1">
- <div id="cw"><canvas id="draw" width="800" height="1280"></canvas></div>
+ <div id="cw"><canvas id="draw" width="1280" height="720"></canvas></div>
  <div class="bar">
   <div class="grip" title="Drag to move">&#8943; drag &#8943;</div>
   <label>Color <input type="color" id="color" value="#1a8a3a"></label>
@@ -101,8 +100,6 @@ footer.fine{margin-top:1.2rem;text-align:center;font-weight:600}
  <div class="stage" id="stage"></div>
  <div class="bar">
   <div class="grip" title="Drag to move">&#8943; drag &#8943;</div>
-  <button class="alt" id="full">Fullscreen for beamer</button>
-  <span class="sp"></span>
   <button class="go" data-next>Next &rarr;</button>
  </div>
 </section>
@@ -160,16 +157,16 @@ document.querySelectorAll('[data-next]').forEach(b=>b.onclick=()=>show(cur+1));
 const cv=$('draw'),ctx=cv.getContext('2d'),cu=$('cursor');
 let tool='pen',down=false,last;
 function setTool(t){tool=t;['pen','eraser','fill'].forEach(k=>$(k).classList.toggle('sel',k==t))}
-// the permanent backdrop is the canvas base; it has the same 800x1280 ratio as the canvas, so it fills it exactly
-const bd=new Image();let bdReady=false;bd.onload=()=>{bdReady=true;redraw()};bd.src=BACKDROP_SRC;
-function paintBase(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);if(bdReady)ctx.drawImage(bd,0,0,cv.width,cv.height)}
+// plain white canvas
+function paintBase(){ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height)}
 paintBase();
-// eraser draws on a separate layer so it never wipes the backdrop
+// strokes live on their own layer, so the eraser only removes strokes
 const ink=document.createElement('canvas');ink.width=cv.width;ink.height=cv.height;const ic=ink.getContext('2d');
-// the drawing keeps its 800x1280 pixels; only its on-screen size changes to fit the free area
+// the canvas fills the whole screen area; strokes are kept when the window resizes
 function fit(){document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');
- const w=$('cw').clientWidth,h=$('cw').clientHeight;if(!w||!h)return;
- const s=Math.min(w/cv.width,h/cv.height);cv.style.width=cv.width*s+'px';cv.style.height=cv.height*s+'px'}
+ const w=$('cw').clientWidth,h=$('cw').clientHeight;if(!w||!h||(cv.width==w&&cv.height==h))return;
+ const old=document.createElement('canvas');old.width=ink.width;old.height=ink.height;old.getContext('2d').drawImage(ink,0,0);
+ cv.width=ink.width=w;cv.height=ink.height=h;ic.drawImage(old,0,0);redraw()}
 function redraw(){paintBase();ctx.drawImage(ink,0,0)}
 function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]}
 function sz(){return +$('size').value}
@@ -212,21 +209,9 @@ document.querySelectorAll('.bar').forEach(bar=>{const grip=bar.querySelector('.g
  grip.onpointerup=()=>off=null});
 $('clear').onclick=()=>{ic.clearRect(0,0,ink.width,ink.height);redraw()};
 
-// ---- current image: generated placeholder of a poor park, to be replaced by the permanent photo
-const curImg=(()=>{const c=document.createElement('canvas');c.width=1280;c.height=720;const x=c.getContext('2d');
- const g=x.createLinearGradient(0,0,0,300);g.addColorStop(0,'#cfd8dc');g.addColorStop(1,'#eceff1');x.fillStyle=g;x.fillRect(0,0,1280,720);
- x.fillStyle='#90a4ae';[[0,170,140,130],[150,120,110,180],[280,190,150,110],[900,140,120,160],[1040,180,130,120],[1170,110,110,190]].forEach(b=>x.fillRect(...b));
- x.fillStyle='#b99b6b';x.fillRect(0,300,1280,420);
- x.fillStyle='#a58652';for(let i=0;i<40;i++){x.beginPath();x.ellipse((i*397)%1280,330+(i*151)%370,40+(i%5)*12,10+(i%3)*5,0,0,7);x.fill()}
- x.fillStyle='#9e9e9e';x.beginPath();x.moveTo(500,720);x.lineTo(780,720);x.lineTo(680,300);x.lineTo(600,300);x.fill();
- const tree=(px,py,s)=>{x.fillStyle='#6d4c41';x.fillRect(px-6*s,py-90*s,12*s,90*s);x.fillStyle='#8a9a5b';x.beginPath();x.arc(px,py-110*s,38*s,0,7);x.fill()};
- tree(220,520,1.2);tree(1030,450,.9);
- x.strokeStyle='#6b7a3a';x.lineWidth=3;x.beginPath();x.moveTo(400,560);x.lineTo(400,590);x.stroke();x.fillStyle='#e8d44d';x.beginPath();x.arc(400,556,7,0,7);x.fill();
- x.fillStyle='#5d4037';x.fillRect(880,600,150,14);x.fillRect(890,614,10,36);x.fillRect(1010,614,10,36);
- x.fillStyle='#37474f';x.font='24px sans-serif';x.fillText('Placeholder image',20,700);
- return c.toDataURL('image/jpeg',.85)})();
+// ---- current image: the same backdrop the user draws on
+const curImg=BACKDROP_SRC;
 $('stage').innerHTML=`<img src="${curImg}">`;
-$('full').onclick=()=>$('stage').requestFullscreen&&$('stage').requestFullscreen();
 
 // ---- AI analysis
 const SAFE=(()=>{const c=document.createElement('canvas');c.width=640;c.height=360;const x=c.getContext('2d');
@@ -234,29 +219,30 @@ const SAFE=(()=>{const c=document.createElement('canvas');c.width=640;c.height=3
  x.fillStyle='#4a90c8';[[60,150,70,110],[150,110,80,150],[260,170,60,90],[350,90,90,170],[470,140,70,120]].forEach(b=>x.fillRect(...b));
  return c.toDataURL('image/jpeg',.8)})();
 let drawing=null,drawingFlagged=false;
-// Claude sees the whole canvas: the backdrop template plus whatever the user drew on it
+// Claude sees the drawing exactly as it is on the canvas
 function prep3(){drawing=cv.toDataURL('image/jpeg',.85);
  $('p1').src=drawing;$('p2').src=curImg;$('analysis').textContent='';$('status').textContent=''}
-// Image 1 sent to Claude = the child's drawing, image 2 = the stock photo of the park.
+// Image 1 sent to Claude = the child's drawing on a blank canvas, image 2 = the Current picture of the park.
 const PROMPT=`Topic: biodiversity
-You get two images. Image 1 is a template landscape picture that a child drew on top of, with a pen and a paint bucket, to show their ideal ecosystem. The template is the same starting point for everyone, and what the child added or changed is their own. Image 2 is a stock image of a Rotterdam park with these problems:
+You get two images. Image 1 is a drawing of an ideal ecosystem made by a child on a blank canvas. Image 2 is the Current situation: a picture of a Rotterdam park with these problems:
 * Dry soil
 * Not enough shade during summer
 * Not enough unique flowers
 * Not enough unique insects
 
-Step 1: List every plant name, animal name and relevant landscape feature in image 1 (the template together with the child's additions), with a confidence level, as a JSON array in this format:
+Step 1: List every plant name, animal name and relevant landscape feature in the child's drawing (image 1), with a confidence level, as a JSON array in this format:
 [{"name":"butterfly","type":"animal","count":2,"confidence":0.95},{"name":"tree","type":"plant","count":2,"confidence":0.95}]
-Step 2: Compare the features in the picture (image 1) to what the Current image (image 2) shows, using the park's problems as the points of comparison.
+Step 2: Compare the features in the drawing (image 1) to what the Current image (image 2) shows, using the park's problems as the points of comparison.
 Step 3: Write a short text for the user with four parts, in this order.
-Part 1: say in broad strokes what you see in their picture, for example the general mood and the main kinds of nature in it. Stay general: do not list every item and do not give counts or exact details.
-Part 2: say what the Current image shows instead, mentioning up to 3 of the park's problems that stand out against their picture.
-Part 3: compliment the picture based on how different and original it is compared to the Current image. The bigger the difference, the stronger the compliment. Do not repeat that it is unique or one of a kind in every reply, and do not use the same wording each time.
-Part 4: give the user advice for making a start on turning the Current image into their picture. Give a first step, and optionally a second step. Each step must be something a 12 to 17 year old could realistically do themselves or with friends, family, school or neighbours, and each must be small enough to actually start. Make them link to what is missing in the Current image compared to their picture. Write each step as one short sentence. Never give more than two steps.
+Part 1: say in broad strokes what you see in their drawing, for example the general mood and the main kinds of nature in it. Stay general: do not list every item and do not give counts or exact details.
+Part 2: say what the Current image shows instead, mentioning up to 3 of the park's problems that stand out against their drawing.
+Part 3: compliment the drawing based on how different and original it is compared to the Current image. The bigger the difference, the stronger the compliment. Do not repeat that it is unique or one of a kind in every reply, and do not use the same wording each time.
+Part 4: give the user advice for making a start on turning the Current image into their drawing. Give a first step, and optionally a second step. Each step must be something a 12 to 17 year old could realistically do themselves or with friends, family, school or neighbours, and each must be small enough to actually start. Make them link to what is missing in the Current image compared to their drawing. Write each step as one short sentence. Never give more than two steps.
 Finish with one short, warm sentence of praise for the user. Informal wording is fine, but it must stay child friendly.
-Do not give any other advice or criticism, and do not grade the picture. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise.
+If the canvas is blank or you cannot see anything drawn, kindly say that nothing has been drawn yet and encourage them to give it a try, and skip parts 3 and 4.
+Do not give any other advice or criticism, and do not grade the drawing. Write for teenagers aged 12 to 17: a friendly, casual, encouraging tone, short sentences, everyday words, explain any science word in a few simple words, and no baby talk or lecturing. Be concise.
 
-Safety check: set nsfw to true if EITHER image is sexual, hateful, discriminatory or violent.
+Safety check: set nsfw to true if image 1 is sexual, hateful, discriminatory or violent.
 
 Reply ONLY with JSON: {"nsfw":boolean,"features":[the array from step 1],"output":"the text from step 3"}`;
 // Cloudflare Worker address that holds the key. Empty = visitors paste their own key instead.
@@ -270,7 +256,7 @@ $('run').onclick=async()=>{
  try{
   const img=d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64(d)}});
   // photo is shrunk to jpeg so big uploads stay under the API image size limit
-  const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawing),img(await thumb(curImg,1280)),{type:'text',text:prompt}]}]});
+  const body=JSON.stringify({model:'claude-haiku-5-5',max_tokens:2000,messages:[{role:'user',content:[img(drawing),img(await thumb(curImg,800)),{type:'text',text:prompt}]}]});
   let r,j;
   // 429/529 = Anthropic is busy or rate limited: retry with growing waits
   for(let n=1;n<=5;n++){
